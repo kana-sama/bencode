@@ -18,8 +18,8 @@ defmodule Bencode do
     def string(s) do
       with {:ok, n, s} <- Number.unsigned(s),
            {:ok, _, s} <- char(s, ":"),
-           {:ok, s, s} <- take(s, n) do
-        {:ok, s, s}
+           {:ok, x, s} <- take(s, n) do
+        {:ok, x, s}
       end
     end
 
