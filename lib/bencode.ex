@@ -1,53 +1,42 @@
 defmodule Bencode do
-  defmodule Spec do
-    import Parser
-    alias Parser.Number
+  use ParseSpec
 
-    def term(s) do
-      int(s) <|> string(s) <|> list(s) <|> dict(s)
-    end
-
-    def int(s) do
-      with {:ok, _, s} <- char(s, "i"),
-           {:ok, x, s} <- Number.signed(s),
-           {:ok, _, s} <- char(s, "e") do
-        {:ok, x, s}
-      end
-    end
-
-    def string(s) do
-      with {:ok, n, s} <- Number.unsigned(s),
-           {:ok, _, s} <- char(s, ":"),
-           {:ok, x, s} <- take(s, n) do
-        {:ok, x, s}
-      end
-    end
-
-    def list(s) do
-      with {:ok, _, s} <- char(s, "l"),
-           {:ok, x, s} <- many(s, &term/1),
-           {:ok, _, s} <- char(s, "e") do
-        {:ok, x, s}
-      end
-    end
-
-    def dict(s) do
-      with {:ok, _, s} <- char(s, "d"),
-           {:ok, x, s} <- many(s, &pair/1),
-           {:ok, _, s} <- char(s, "e") do
-        {:ok, x |> Enum.into(Map.new()), s}
-      end
-    end
-
-    defp pair(s) do
-      with {:ok, k, s} <- term(s),
-           {:ok, v, s} <- term(s) do
-        {:ok, {k, v}, s}
-      end
-    end
+  @impl ParseSpec
+  def term(s) do
+    int(s) <|> string(s) <|> list(s) <|> dict(s)
   end
 
-  def decode(source) do
-    Parser.run(Spec, :term, source)
+  defparser int do
+    bind(char(?i))
+    value = bind(Number.signed())
+    bind(char(?e))
+    return(value)
+  end
+
+  defparser string do
+    count = bind(Number.unsigned())
+    bind(char(?:))
+    value = bind(take(count))
+    return(value)
+  end
+
+  defparser list do
+    bind(char(?l))
+    elements = bind(many(&term/1))
+    bind(char(?e))
+    return(elements)
+  end
+
+  defparser dict do
+    bind(char(?d))
+    pairs = bind(many(&pair/1))
+    bind(char(?e))
+    return(Enum.into(pairs, Map.new()))
+  end
+
+  defparser pair do
+    a = bind(term)
+    b = bind(term)
+    return({a, b})
   end
 end

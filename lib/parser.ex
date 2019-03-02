@@ -28,7 +28,7 @@ defmodule Parser do
     end
   end
 
-  def char(s, <<char>>) do
+  def char(s, char) do
     with <<^char, s::binary>> <- s do
       {:ok, char, s}
     else

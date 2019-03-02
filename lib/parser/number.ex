@@ -9,7 +9,7 @@ defmodule Parser.Number do
   end
 
   defp sign(s) do
-    with {:ok, sign, s} <- optional(s, &char(&1, "-")) do
+    with {:ok, sign, s} <- optional(s, &char(&1, ?-)) do
       sign =
         case sign do
           {:some, _char} -> -1
